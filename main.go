@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
+	"math"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -80,28 +82,41 @@ func calculatePoints(w http.ResponseWriter, r *http.Request) {
 func getPoints(receipt Receipt) int {
 	totalPoints := 0
 
-	totalPoints += len(strings.Join(strings.Fields(receipt.Retailer), ""))
-	if val, err := strconv.Atoi(receipt.Total); err == nil && val%1 == 0 {
-		totalPoints += 50
-	}
+	// Rule 1: One point for every alphanumeric character in the retailer name.
+    totalPoints += len(strings.Join(strings.FieldsFunc(receipt.Retailer, func(r rune) bool {
+        return !unicode.IsLetter(r) && !unicode.IsNumber(r)
+    }), ""))
+
+    // Rule 2: 50 points if the total is a round dollar amount with no cents.
+    if val, err := strconv.ParseFloat(receipt.Total, 64); err == nil && int(val)%1 == 0 {
+        totalPoints += 50
+    }
+
+	// Rule 3: 25 points if the total is a multiple of 0.25.
 	if val, err := strconv.ParseFloat(receipt.Total, 64); err == nil && int(val)%25 == 0 {
 		totalPoints += 25
 	}
+
+	// Rule 4: 5 points for every two items on the receipt.
 	totalPoints += len(receipt.Items) / 2 * 5
 
+	// Rule 5: If the trimmed length of the item description is a multiple of 3,
+	// multiply the price by 0.2 and round up to the nearest integer.
 	for _, item := range receipt.Items {
 		trimmedLength := len(strings.TrimSpace(item.ShortDescription))
 		if trimmedLength%3 == 0 {
-			pointsForItem := int(float64(20) * strToFloat64(item.Price))
+			pointsForItem := int(math.Ceil(strToFloat64(item.Price) * 0.2))
 			totalPoints += pointsForItem
 		}
 	}
 
+	// Rule 6: 6 points if the day in the purchase date is odd.
 	purchaseDay := getDayFromDateString(receipt.PurchaseDate)
 	if purchaseDay%2 != 0 {
 		totalPoints += 6
 	}
 
+	// Rule 7: 10 points if the time of purchase is after 2:00 pm and before 4:00 pm.
 	purchaseHour := getTimeFromTimeString(receipt.PurchaseTime)
 	if purchaseHour > 14 && purchaseHour < 16 {
 		totalPoints += 10
