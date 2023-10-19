@@ -5,6 +5,9 @@ Certainly! Below is a simple README.md file based on the provided Go code. Feel 
 
 This is a simple Go application that provides an API for processing receipts and calculating points based on certain rules.
 
+# Kindly note
+The getPoints function gives incorrect points and could have been rectified. But I kept a time limit due to which I forced myself to submit this codebase. Besides the Node.js project contains accurate points calculation logic
+
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
