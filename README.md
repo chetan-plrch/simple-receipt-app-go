@@ -38,7 +38,15 @@ Before you begin, ensure you have the following installed:
    cd simple-receipt-app-go
    ```
 
-3. Run the application:
+3. Run the following `go get` commands to install the required dependencies:
+
+    ```bash
+    go get -u github.com/gorilla/mux
+    go get -u github.com/go-playground/validator/v10
+    go get -u github.com/google/uuid
+    ```
+
+4. Run the application:
 
    ```bash
    go run main.go
